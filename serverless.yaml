@@ -1,0 +1,45 @@
+service: asg-ecr
+provider:
+  name: aws
+  runtime: python3.8
+  region: us-east-1
+  stage: shared
+  stackTags:
+    Name: asg-registry-lifecycle-policy
+    Project: product-distribution
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+        - lambda:InvokeAsync
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - ecr:*
+      Resource: "*"
+
+functions:
+  lifecycle-policy:
+    handler: main.lambda_handler
+    description: "Image Clean Up Policy"
+    memorySize: 150
+    timeout: 30
+    runtime: python3.8
+    events:
+      -  schedule: cron(0 9 1 * ? *)
+
+
+plugins:
+  - serverless-plugin-select
+  - serverless-python-requirements
+custom:
+  pythonRequirements:
+    pythonBin: python3
+    dockerizePip: non-linux
